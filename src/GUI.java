@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
+import org.joda.time.*;
+
 
 /**
  * Created by Roar on 30.11.14.
@@ -18,25 +20,87 @@ public class GUI extends JFrame {
     private Logo tv2Unmarked, tv2Marked, nrkUnmarked, nrkMarked, csportsUnmarked, csportsMarked,
             viaplayUnmarked, viaplayMarked, netflixMarked, netflixUnmarked;
     private ArrayList<JPanel> logoList;
-    private JPanel tv2Panel, nrkPanel, csportsPanel, viaplayPanel, netflixPanel;
+    private JPanel tv2Panel, nrkPanel, csportsPanel, viaplayPanel, netflixPanel, datePanel, timePanel;
+    private JodaLabel dateLabel, timeLabel;
     private int counter = 0;
+    private boolean initialized = false;
+
     private final int IMAGE_HEIGHT = 86, IMAGE_WIDTH = 300;
 
     GUI(ArrayList<String> appsList, File markedFolder, File unmarkedFolder) {
         this.appsList = appsList;
         this.markedFolder = markedFolder;
         this.unmarkedFolder = unmarkedFolder;
+
         setMarkedImages();
         setUnmarkedImages();
+        setDateAndTime();
         setPanels();
-        addImages();
+        addPanels();
+        new Thread(new UpdateTimeAndDate()).start();
+
+    }
+
+    private void setDateAndTime() {
+        LocalTime localTime = new LocalTime();
+        LocalDate localDate = new LocalDate();
+        String minutes, seconds, hours, months, days;
+
+        minutes = ""+localTime.getMinuteOfHour();
+        hours = ""+localTime.getHourOfDay();
+        seconds = ""+localTime.getSecondOfMinute();
+        months = ""+localDate.getMonthOfYear();
+        days = ""+localDate.getDayOfMonth();
+
+        if (Integer.parseInt(minutes) < 10) {
+            minutes = "0"+localTime.getMinuteOfHour();
+        }
+        if (Integer.parseInt(seconds) < 10) {
+            seconds = "0"+localTime.getSecondOfMinute();
+        }
+        if (Integer.parseInt(hours) < 10) {
+            hours = "0"+localTime.getHourOfDay();
+        }
+        if (Integer.parseInt(months) < 10) {
+            months = "0"+localDate.getMonthOfYear();
+        }
+        if (Integer.parseInt(days) < 10) {
+            days = "0"+localDate.getDayOfMonth();
+        }
+
+        String time =  hours + " : " + minutes + " : " + seconds;
+        String date = days + " / " + months + " / " + localDate.getYear();
+        if (!initialized) {
+            datePanel = new JPanel();
+            timePanel = new JPanel();
+            datePanel.setOpaque(false);
+            timePanel.setOpaque(false);
+            dateLabel = new JodaLabel(date);
+            timeLabel = new JodaLabel(time);
+            dateLabel.setFont(new Font("Helvetica Neue", Font.PLAIN, 30));
+            timeLabel.setFont(new Font("Helvetica Neue", Font.PLAIN, 60));
+            datePanel.add(dateLabel);
+            timePanel.add(timeLabel);
+            initialized = true;
+        } else {
+            timeLabel.setText(time);
+            dateLabel.setText(date);
+            datePanel.revalidate();
+            datePanel.repaint();
+            timePanel.repaint();
+            timePanel.repaint();
+
+        }
+
+        revalidate();
+        repaint();
     }
     private void setMarkedImages() {
-        tv2Marked = new Logo(new ImageIcon(markedFolder.getAbsolutePath()+"/tv2.png").getImage(), 488, 150);
-        nrkMarked = new Logo(new ImageIcon(markedFolder.getAbsolutePath()+"/nrk.png").getImage(), 526, 150);
-        csportsMarked = new Logo(new ImageIcon(markedFolder.getAbsolutePath()+"/csports.png").getImage(), 678, 150);
-        viaplayMarked = new Logo(new ImageIcon(markedFolder.getAbsolutePath()+"/viaplay.png").getImage(), 709, 150);
-        netflixMarked = new Logo(new ImageIcon(markedFolder.getAbsolutePath()+"/netflix.png").getImage(), 550, 150);
+        tv2Marked = new Logo(new ImageIcon(markedFolder.getAbsolutePath()+"/tv2.png").getImage(), 390, 150);
+        nrkMarked = new Logo(new ImageIcon(markedFolder.getAbsolutePath()+"/nrk.png").getImage(), 421, 150);
+        csportsMarked = new Logo(new ImageIcon(markedFolder.getAbsolutePath()+"/csports.png").getImage(), 542, 150);
+        viaplayMarked = new Logo(new ImageIcon(markedFolder.getAbsolutePath()+"/viaplay.png").getImage(), 567, 150);
+        netflixMarked = new Logo(new ImageIcon(markedFolder.getAbsolutePath()+"/netflix.png").getImage(), 440, 150);
         markedImages = new ArrayList<Logo>();
 
         markedImages.add(csportsMarked);
@@ -46,11 +110,11 @@ public class GUI extends JFrame {
         markedImages.add(tv2Marked);
     }
     private void setUnmarkedImages() {
-        tv2Unmarked = new Logo(new ImageIcon(unmarkedFolder.getAbsolutePath()+"/tv2.png").getImage(), 488, 150);
-        nrkUnmarked = new Logo(new ImageIcon(unmarkedFolder.getAbsolutePath()+"/nrk.png").getImage(), 526, 150);
-        csportsUnmarked = new Logo(new ImageIcon(unmarkedFolder.getAbsolutePath()+"/csports.png").getImage(), 678, 150);
-        viaplayUnmarked = new Logo(new ImageIcon(unmarkedFolder.getAbsolutePath()+"/viaplay.png").getImage(), 709, 150);
-        netflixUnmarked = new Logo(new ImageIcon(unmarkedFolder.getAbsolutePath()+"/netflix.png").getImage(), 550, 150);
+        tv2Unmarked = new Logo(new ImageIcon(unmarkedFolder.getAbsolutePath()+"/tv2.png").getImage(), 390, 150);
+        nrkUnmarked = new Logo(new ImageIcon(unmarkedFolder.getAbsolutePath()+"/nrk.png").getImage(), 421, 150);
+        csportsUnmarked = new Logo(new ImageIcon(unmarkedFolder.getAbsolutePath()+"/csports.png").getImage(), 542, 150);
+        viaplayUnmarked = new Logo(new ImageIcon(unmarkedFolder.getAbsolutePath()+"/viaplay.png").getImage(), 567, 150);
+        netflixUnmarked = new Logo(new ImageIcon(unmarkedFolder.getAbsolutePath()+"/netflix.png").getImage(), 440, 150);
 
         unmarkedImages = new ArrayList<Logo>();
         unmarkedImages.add(csportsUnmarked);
@@ -66,7 +130,6 @@ public class GUI extends JFrame {
         viaplayPanel = new JPanel();
         netflixPanel = new JPanel();
         logoList = new ArrayList<JPanel>();
-
 
         CountDownLatch cdl = new CountDownLatch(5);
 
@@ -93,8 +156,7 @@ public class GUI extends JFrame {
             System.out.println("Noe gikk fryktelig galt");
         }
     }
-    private void addImages() {
-        setLayout(new GridBagLayout());
+    private void addPanels() {
         GridBagConstraints c = new GridBagConstraints();
         int xValue = 0, yValue = 0;
 
@@ -102,25 +164,45 @@ public class GUI extends JFrame {
         setExtendedState(Frame.MAXIMIZED_BOTH);
         setVisible(true);
 
-        c.gridx = 0;
+        JPanel logos = new JPanel();
+        logos.setLayout(new GridBagLayout());
+        logos.setBackground(Color.BLACK);
+
+        c.gridx = xValue;
         c.gridy = yValue++;
-        add(csportsPanel, c);
+        logos.add(csportsPanel, c);
+
+        c.gridx = xValue;
+        c.gridy = yValue++;
+        logos.add(netflixPanel, c);
+
+        c.gridx = xValue;
+        c.gridy = yValue++;
+        logos.add(viaplayPanel, c);
+
+        c.gridx = xValue;
+        c.gridy = yValue++;
+        logos.add(nrkPanel, c);
+
+        c.gridx = xValue++;
+        c.gridy = yValue;
+        logos.add(tv2Panel, c);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new GridBagLayout());
+        panel.setBackground(Color.BLACK);
 
         c.gridx = 0;
-        c.gridy = yValue++;
-        add(netflixPanel, c);
+        c.gridy = 0;
+        panel.add(datePanel, c);
 
         c.gridx = 0;
-        c.gridy = yValue++;
-        add(viaplayPanel, c);
+        c.gridy = 1;
+        panel.add(timePanel, c);
 
-        c.gridx = 0;
-        c.gridy = yValue++;
-        add(nrkPanel, c);
+        add(panel, BorderLayout.EAST);
+        add(logos, BorderLayout.CENTER);
 
-        c.gridx = 0;
-        c.gridy = yValue++;
-        add(tv2Panel, c);
 
         addKeyListeners(this, true);
 
@@ -236,6 +318,28 @@ public class GUI extends JFrame {
                 cdl.countDown();
 
             }
+        }
+    }
+    private class UpdateTimeAndDate implements Runnable {
+
+        public void run() {
+            while (true) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+
+                }
+                setDateAndTime();
+                System.out.println("Hei");
+            }
+        }
+    }
+    private class JodaLabel extends JLabel {
+        JodaLabel(String text) {
+            super(text);
+            setForeground(Color.WHITE);
+            setOpaque(false);
+
         }
     }
     @SuppressWarnings({"unchecked", "rawtypes"})
